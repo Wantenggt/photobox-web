@@ -18,6 +18,8 @@ export default function CameraPage() {
   const [count, setCount] = useState(3);
   const [currentPhoto, setCurrentPhoto] = useState(1);
   const [finished, setFinished] = useState(false);
+  // 👉 DITAMBAHKAN: State untuk mengontrol animasi flash
+  const [isFlashing, setIsFlashing] = useState(false);
 
   // Ambil foto dari webcam
   const capture = () => {
@@ -42,7 +44,14 @@ export default function CameraPage() {
         } else {
           clearInterval(timer);
 
+          // 👉 DITAMBAHKAN: Picu efek flash tepat saat hitung mundur selesai (jepret)
+          setIsFlashing(true);
           capture();
+
+          // Matikan kembali efek flash setelah animasi memudar selesai (400ms)
+          setTimeout(() => {
+            setIsFlashing(false);
+          }, 400);
 
           resolve();
         }
@@ -122,16 +131,24 @@ export default function CameraPage() {
     }
   };
 
-  <Link
-  href="/"
-  className="bg-blue-600 hover:bg-blue-500 px-6 py-3 rounded-lg"
->
-  🏠 Home
-</Link>
-
   return (
-    <main className="min-h-screen bg-zinc-950 text-white flex flex-col items-center py-10">
-      <h1 className="text-4xl font-bold mb-2">
+    <main className="min-h-screen bg-zinc-950 text-white flex flex-col items-center py-10 relative">
+      {/* ⚡ DITAMBAHKAN: Overlay Flash Putih. Muncul di atas seluruh layar saat isFlashing bernilai true */}
+      {isFlashing && (
+        <div className="fixed inset-0 bg-white z-50 pointer-events-none animate-flash" />
+      )}
+
+      {/* Tombol Home diletakkan dengan benar di dalam komponen tree */}
+      <div className="absolute top-4 left-4">
+        <Link
+          href="/"
+          className="bg-zinc-800 hover:bg-zinc-700 px-4 py-2 rounded-lg text-sm block"
+        >
+          🏠 Home
+        </Link>
+      </div>
+
+      <h1 className="text-4xl font-bold mb-2 mt-4">
         PhotoBox
       </h1>
 
