@@ -18,10 +18,9 @@ export default function CameraPage() {
   const [count, setCount] = useState(3);
   const [currentPhoto, setCurrentPhoto] = useState(1);
   const [finished, setFinished] = useState(false);
-  // 👉 DITAMBAHKAN: State untuk mengontrol animasi flash
   const [isFlashing, setIsFlashing] = useState(false);
 
-  // Ambil foto dari webcam
+  // Ambil foto
   const capture = () => {
     const imageSrc = webcamRef.current?.getScreenshot();
 
@@ -34,6 +33,7 @@ export default function CameraPage() {
   const countdown = () => {
     return new Promise<void>((resolve) => {
       let current = 3;
+
       setCount(current);
 
       const timer = setInterval(() => {
@@ -44,11 +44,10 @@ export default function CameraPage() {
         } else {
           clearInterval(timer);
 
-          // 👉 DITAMBAHKAN: Picu efek flash tepat saat hitung mundur selesai (jepret)
           setIsFlashing(true);
+
           capture();
 
-          // Matikan kembali efek flash setelah animasi memudar selesai (400ms)
           setTimeout(() => {
             setIsFlashing(false);
           }, 400);
@@ -70,7 +69,6 @@ export default function CameraPage() {
 
       await countdown();
 
-      // jeda antar foto
       await new Promise((resolve) => setTimeout(resolve, 800));
     }
 
@@ -78,7 +76,7 @@ export default function CameraPage() {
     setFinished(true);
   };
 
-  // Ulangi sesi
+  // Retake
   const retake = () => {
     setPhotos([]);
     setFinished(false);
@@ -87,20 +85,29 @@ export default function CameraPage() {
     setCount(3);
   };
 
-  // Download PhotoStrip HD
+  // Download PhotoStrip
   const downloadStrip = async () => {
     try {
       const dataUrl = await generatePhotoStrip(photos);
-  
+
       const response = await fetch(dataUrl);
       const blob = await response.blob();
-  
-      const file = new File([blob], `photobox-${Date.now()}.png`, {
-        type: "image/png",
-      });
-  
-      // Browser yang mendukung Web Share API (iPhone/Android)
+
+      const file = new File(
+        [blob],
+        `photobox-${Date.now()}.png`,
+        {
+          type: "image/png",
+        }
+      );
+
+      // Cek apakah perangkat mobile
+      const isMobile =
+        /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+      // Mobile → Share
       if (
+        isMobile &&
         navigator.canShare &&
         navigator.canShare({ files: [file] })
       ) {
@@ -109,21 +116,21 @@ export default function CameraPage() {
           text: "Hasil PhotoBox",
           files: [file],
         });
-  
+
         return;
       }
-  
-      // Fallback untuk desktop
+
+      // Desktop → Download langsung
       const url = URL.createObjectURL(blob);
-  
+
       const link = document.createElement("a");
       link.href = url;
       link.download = file.name;
-  
+
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-  
+
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error(err);
@@ -133,12 +140,11 @@ export default function CameraPage() {
 
   return (
     <main className="min-h-screen bg-zinc-950 text-white flex flex-col items-center py-10 relative">
-      {/* ⚡ DITAMBAHKAN: Overlay Flash Putih. Muncul di atas seluruh layar saat isFlashing bernilai true */}
+
       {isFlashing && (
         <div className="fixed inset-0 bg-white z-50 pointer-events-none animate-flash" />
       )}
 
-      {/* Tombol Home diletakkan dengan benar di dalam komponen tree */}
       <div className="absolute top-4 left-4">
         <Link
           href="/"
@@ -196,6 +202,7 @@ export default function CameraPage() {
           </button>
         </div>
       )}
+
     </main>
   );
 }
