@@ -6,8 +6,9 @@ export async function generatePhotoStrip(
     const HEADER = 180;
     const FOOTER = 120;
   
-    const PHOTO_WIDTH = WIDTH - MARGIN * 2;
-    const PHOTO_HEIGHT = 720; // rasio 3:2
+    const PHOTO_WIDTH = WIDTH - MARGIN * 2; // 1080
+    // 👉 DIUBAH: Mengubah tinggi foto agar rasionya tepat 3:4 potret (1080 * 4 / 3 = 1440)
+    const PHOTO_HEIGHT = 1440; 
   
     const HEIGHT =
       HEADER +
@@ -25,6 +26,12 @@ export async function generatePhotoStrip(
       throw new Error("Canvas tidak tersedia");
     }
   
+    // 👉 DITAMBAHKAN: Memaksa Canvas iOS Safari agar menghormati metadata rotasi gambar asli
+    ctx.imageSmoothingEnabled = true;
+    if ('imageOrientation' in ctx) {
+      (ctx as any).imageOrientation = 'from-image';
+    }
+  
     // Background
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
@@ -32,7 +39,6 @@ export async function generatePhotoStrip(
     // Judul
     ctx.fillStyle = "#000";
     ctx.textAlign = "center";
-  
     ctx.font = "bold 60px Arial";
     ctx.fillText("📸 PhotoBox", WIDTH / 2, 80);
   
@@ -40,7 +46,7 @@ export async function generatePhotoStrip(
     ctx.font = "32px Arial";
     ctx.fillText("Capture Your Moment", WIDTH / 2, 130);
   
-    let y = HEADER;
+    let y = HEADER + MARGIN; // Disesuaikan agar jarak foto pertama seimbang
   
     for (const photo of photos) {
       const img = await loadImage(photo);
@@ -69,15 +75,13 @@ export async function generatePhotoStrip(
   function loadImage(src: string): Promise<HTMLImageElement> {
     return new Promise((resolve, reject) => {
       const img = new Image();
-  
       img.onload = () => resolve(img);
       img.onerror = reject;
-  
       img.src = src;
     });
   }
   
-  // Crop otomatis tanpa membuat foto gepeng
+  // Fungsi crop otomatis (Object-fit cover versi Canvas)
   function drawImageCover(
     ctx: CanvasRenderingContext2D,
     img: HTMLImageElement,
@@ -95,11 +99,11 @@ export async function generatePhotoStrip(
     let sh = img.height;
   
     if (imgRatio > frameRatio) {
-      // Foto lebih lebar → crop kiri kanan
+      // Foto lebih lebar dari frame target → potong bagian kiri dan kanan
       sw = img.height * frameRatio;
       sx = (img.width - sw) / 2;
     } else {
-      // Foto lebih tinggi → crop atas bawah
+      // Foto lebih tinggi dari frame target → potong bagian atas dan bawah
       sh = img.width / frameRatio;
       sy = (img.height - sh) / 2;
     }
