@@ -81,19 +81,44 @@ export default function CameraPage() {
   // Download PhotoStrip HD
   const downloadStrip = async () => {
     try {
-      const image = await generatePhotoStrip(photos);
-
+      const dataUrl = await generatePhotoStrip(photos);
+  
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+  
+      const file = new File([blob], `photobox-${Date.now()}.png`, {
+        type: "image/png",
+      });
+  
+      // Browser yang mendukung Web Share API (iPhone/Android)
+      if (
+        navigator.canShare &&
+        navigator.canShare({ files: [file] })
+      ) {
+        await navigator.share({
+          title: "PhotoBox",
+          text: "Hasil PhotoBox",
+          files: [file],
+        });
+  
+        return;
+      }
+  
+      // Fallback untuk desktop
+      const url = URL.createObjectURL(blob);
+  
       const link = document.createElement("a");
-
-      link.href = image;
-      link.download = `photobox-${Date.now()}.png`;
-
+      link.href = url;
+      link.download = file.name;
+  
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-    } catch (error) {
-      console.error(error);
-      alert("Gagal membuat PhotoStrip.");
+  
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+      alert("Gagal mengunduh gambar.");
     }
   };
 
