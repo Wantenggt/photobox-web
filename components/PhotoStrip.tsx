@@ -16,7 +16,7 @@ export default function PhotoStrip({ photos }: PhotoStripProps) {
   return (
     <div
       id="photo-strip"
-      className="bg-white rounded-xl shadow-xl p-5 w-[340px] mt-10"
+      className="bg-white rounded-2xl shadow-xl p-5 w-[340px] mt-10"
     >
       <h2 className="text-center text-3xl font-bold text-black">
         📸 PhotoBox
@@ -28,12 +28,16 @@ export default function PhotoStrip({ photos }: PhotoStripProps) {
 
       <div className="space-y-4">
         {photos.map((photo, index) => (
-          <img
+          <div
             key={index}
-            src={photo}
-            alt=""
-            className="rounded-lg w-full border"
-          />
+            className="w-full h-[230px] overflow-hidden rounded-lg border"
+          >
+            <img
+              src={photo}
+              alt={`Photo ${index + 1}`}
+              className="w-full h-full object-cover"
+            />
+          </div>
         ))}
       </div>
 
