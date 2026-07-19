@@ -7,8 +7,8 @@ export async function generatePhotoStrip(
     const FOOTER = 120;
   
     const PHOTO_WIDTH = WIDTH - MARGIN * 2; // 1080
-    // 👉 DIUBAH: Mengubah tinggi foto agar rasionya tepat 3:4 potret (1080 * 4 / 3 = 1440)
-    const PHOTO_HEIGHT = 1440; 
+    // Menurunkan tinggi foto agar rasionya tepat 4:3 Landscape (1080 * 3 / 4 = 810)
+    const PHOTO_HEIGHT = 810; 
   
     const HEIGHT =
       HEADER +
@@ -26,28 +26,30 @@ export async function generatePhotoStrip(
       throw new Error("Canvas tidak tersedia");
     }
   
-    // 👉 DITAMBAHKAN: Memaksa Canvas iOS Safari agar menghormati metadata rotasi gambar asli
+    // Mengoptimalkan penggambaran gambar dan memastikan orientasi EXIF dihormati (terutama di iOS)
     ctx.imageSmoothingEnabled = true;
     if ('imageOrientation' in ctx) {
       (ctx as any).imageOrientation = 'from-image';
     }
   
-    // Background
+    // Latar Belakang (Background) Strip Foto
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
   
-    // Judul
+    // Bagian Header: Judul Utama
     ctx.fillStyle = "#000";
     ctx.textAlign = "center";
     ctx.font = "bold 60px Arial";
     ctx.fillText("📸 PhotoBox", WIDTH / 2, 80);
   
+    // Bagian Header: Subjudul / Slogan
     ctx.fillStyle = "#666";
     ctx.font = "32px Arial";
     ctx.fillText("Capture Your Moment", WIDTH / 2, 130);
   
-    let y = HEADER + MARGIN; // Disesuaikan agar jarak foto pertama seimbang
+    let y = HEADER + MARGIN;
   
+    // Melakukan iterasi dan menggambar setiap foto ke dalam Canvas
     for (const photo of photos) {
       const img = await loadImage(photo);
   
@@ -63,15 +65,18 @@ export async function generatePhotoStrip(
       y += PHOTO_HEIGHT + MARGIN;
     }
   
+    // Bagian Footer: Tanggal Hari Ini
     const today = new Date().toLocaleDateString("id-ID");
   
     ctx.fillStyle = "#666";
     ctx.font = "28px Arial";
     ctx.fillText(today, WIDTH / 2, HEIGHT - 40);
   
+    // Mengembalikan hasil akhir dalam bentuk Data URL Base64 format PNG
     return canvas.toDataURL("image/png");
   }
   
+  // Fungsi pembantu untuk memuat source string gambar ke elemen HTMLImageElement secara asinkron
   function loadImage(src: string): Promise<HTMLImageElement> {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -81,7 +86,7 @@ export async function generatePhotoStrip(
     });
   }
   
-  // Fungsi crop otomatis (Object-fit cover versi Canvas)
+  // Fungsi simulasi CSS 'object-fit: cover' pada Canvas untuk memotong gambar landscape secara presisi ke tengah
   function drawImageCover(
     ctx: CanvasRenderingContext2D,
     img: HTMLImageElement,
@@ -99,11 +104,11 @@ export async function generatePhotoStrip(
     let sh = img.height;
   
     if (imgRatio > frameRatio) {
-      // Foto lebih lebar dari frame target → potong bagian kiri dan kanan
+      // Foto dari webcam lebih lebar dari bingkai landscape -> potong bagian kiri & kanan
       sw = img.height * frameRatio;
       sx = (img.width - sw) / 2;
     } else {
-      // Foto lebih tinggi dari frame target → potong bagian atas dan bawah
+      // Foto dari webcam lebih tinggi (misal orientasi portrait terbalik) -> potong bagian atas & bawah
       sh = img.width / frameRatio;
       sy = (img.height - sh) / 2;
     }
